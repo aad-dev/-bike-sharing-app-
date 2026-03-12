@@ -1,9 +1,31 @@
 import streamlit as st
 import pandas as pd
 import pickle
+import sqlite3
+from datetime import datetime
+
+# database klaarzetten
+
+
+def init_db():
+    conn = sqlite3.connect('predictions.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS prediction_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT,
+                    season INTEGER, yr INTEGER, mnth INTEGER, hr INTEGER,
+                    holiday INTEGER, weekday INTEGER, workingday INTEGER,
+                    weathersit INTEGER, temp REAL, atemp REAL, hum REAL, windspeed REAL,
+                    prediction INTEGER
+                )''')
+    conn.commit()
+    conn.close()
+
+
+init_db()
 
 # inladen van augurk
-with open('bike_rf_model.pkl', 'rb') as file:
+with open('models/bike_rf_model.pkl', 'rb') as file:
     model = pickle.load(file)
 
 st.title("Bike sharing voorspeller")
@@ -41,3 +63,30 @@ if st.button("Voorspel aantal huurfietsen"):
 
     st.success(
         f"Verwacht aantal verhuurde fietsen voor dit uur: **{int(voorspelling[0])}**")
+
+    # resultaat in de database knallen
+    conn = sqlite3.connect('predictions.db')
+    c = conn.cursor()
+    huidige_tijd = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    c.execute('''INSERT INTO prediction_logs 
+                 (timestamp, season, yr, mnth, hr, holiday, weekday, workingday, weathersit, temp, atemp, hum, windspeed, prediction)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+              (huidige_tijd, season, yr, mnth, hr, holiday, weekday, workingday, weathersit, temp, atemp, hum, windspeed, int(voorspelling[0])))
+
+    conn.commit()
+    conn.close()
+
+# geschiedenis op het scherm zetten
+st.markdown("---")
+st.subheader("Database logboek")
+
+conn = sqlite3.connect('predictions.db')
+df_logs = pd.read_sql_query(
+    "SELECT * FROM prediction_logs ORDER BY timestamp DESC", conn)
+conn.close()
+
+if not df_logs.empty:
+    st.dataframe(df_logs)
+else:
+    st.info("Nog geen voorspellingen gedaan")
