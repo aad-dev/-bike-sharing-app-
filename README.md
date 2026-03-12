@@ -10,8 +10,8 @@ De applicatie is live te testen via Render:
 
 ### 1. Lokaal draaiende Docker Container (Stap 5)
 Hieronder zie je de applicatie succesvol draaien via Docker (localhost):
-![Docker Screenshot](screenshot_docker.png)
+![Docker Screenshot](screenshots/screenshot_docker.png)
 
 ### 2. Live applicatie op Render (Stap 6)
 Hieronder zie je de applicatie succesvol voorspellen via de publieke Render URL:
-![Render Screenshot](screenshot_render.png)
+![Render Screenshot](screenshots/screenshot_render.png)
